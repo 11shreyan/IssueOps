@@ -103,11 +103,6 @@ Build a centralized complaint management platform for campuses and hostels that 
 - Department dashboard
 - Admin dashboard
 
-
-## GitHub Repo Description
-
-IssueOps is an MVC-based campus and hostel issue reporting system that categorizes complaints, routes them to the right department, tracks status, and escalates repeated problems that need immediate action.
-
 ## License
 
 Add your preferred license here.
