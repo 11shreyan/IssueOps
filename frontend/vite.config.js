@@ -1,0 +1,8 @@
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  cacheDir: ".vite-cache",
+  build: {
+    emptyOutDir: false,
+  },
+});

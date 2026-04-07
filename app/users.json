@@ -1,0 +1,45 @@
+[
+  {
+    "name": "Aarav Student",
+    "email": "student@issueops.local",
+    "role": "student",
+    "department": null,
+    "password_hash": "146fbcbf53377fbf97e1c503fb2001e0$c554b6ebc4f3467a2ebc10394a3ca39ac89ff0ea8a6330cd6b56bb2c431f0f74"
+  },
+  {
+    "name": "Meera Electrical",
+    "email": "staff@issueops.local",
+    "role": "staff",
+    "department": "Electrical Department",
+    "password_hash": "f43cf8a858d5ff5615e1bff7670a51e9$231a72525d903e0ab4be45b5a483de1722a2f3e7b43e9e8cf9093bac55650373"
+  },
+  {
+    "name": "Admin Priya",
+    "email": "admin@issueops.local",
+    "role": "admin",
+    "department": null,
+    "password_hash": "00eb4a80ba415634f4e7e924ef7f6b5a$30544cfeab63f5137bbbbf8faee4d552a840bbde4281b4225c6be12244bd9400"
+  },
+  {
+    "name": "Diya",
+    "email": "diya@campus.com",
+    "role": "student",
+    "department": "IT Support",
+    "password_hash": "20cc00f5029c9e878a61a1c9d110b042$9740e6ef50e936f7510b5d09aaf880a0faa20c922ff909157f75cf090a10adf6"
+  },
+  {
+    "name": "Raghu",
+    "email": "raghu@campus.in",
+    "role": "admin",
+    "department": null,
+    "password_hash": "e45c05e253014d022d1ab7e1fa4cee29$3f781e8cfc82594a56f81055065ef57f8707aa63fe91a2114f6dcd6525e85331"
+  },
+  {
+    "name": "Shreyan Reddy",
+    "email": "shreyan.reddy1105@gmail.com",
+    "role": "student",
+    "department": null,
+    "password_hash": "26cb37755c5b01e6850c72904ebb05f3$ae0c80b7616f942da706013bc4f93de5829ccb7e0754dbb0e722391e832166c8",
+    "profile_image": null
+  }
+]
