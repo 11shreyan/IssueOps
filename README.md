@@ -102,7 +102,3 @@ Build a centralized complaint management platform for campuses and hostels that 
 - Student dashboard
 - Department dashboard
 - Admin dashboard
-
-## License
-
-Add your preferred license here.
