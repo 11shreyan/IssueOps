@@ -5,9 +5,22 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-DATABASE_URL = os.getenv("ISSUEOPS_DATABASE_URL", "sqlite://")
+def normalize_database_url(raw_url: str) -> str:
+    if raw_url.startswith("postgres://"):
+        return raw_url.replace("postgres://", "postgresql+psycopg://", 1)
+    if raw_url.startswith("postgresql://") and "+psycopg" not in raw_url:
+        return raw_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return raw_url
 
-engine_kwargs = {"connect_args": {"check_same_thread": False}}
+
+DATABASE_URL = normalize_database_url(
+    os.getenv("ISSUEOPS_DATABASE_URL", "sqlite:///./issueops.db")
+)
+IS_SQLITE = DATABASE_URL.startswith("sqlite")
+
+engine_kwargs = {}
+if IS_SQLITE:
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
 if DATABASE_URL == "sqlite://":
     engine_kwargs["poolclass"] = StaticPool
 
@@ -19,6 +32,9 @@ Base = declarative_base()
 
 
 def ensure_issue_schema():
+    if not IS_SQLITE:
+        return
+
     inspector = inspect(engine)
     if "issues" not in inspector.get_table_names():
         return

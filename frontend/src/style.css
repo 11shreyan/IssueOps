@@ -439,6 +439,10 @@ textarea {
   gap: 24px;
 }
 
+.dashboard-side-stack {
+  gap: 18px;
+}
+
 .dashboard-overview {
   margin-bottom: 24px;
 }
@@ -449,6 +453,30 @@ textarea {
   gap: 18px;
   align-items: flex-start;
   margin-bottom: 20px;
+}
+
+.section-heading-copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  text-align: left;
+}
+
+.section-heading-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.section-heading-copy h2 {
+  margin: 0;
+}
+
+.section-heading-action {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .section-copy {
@@ -665,12 +693,13 @@ textarea {
   border-radius: 24px;
   background: linear-gradient(155deg, #163847 0%, #28556a 100%);
   color: #fef9f2;
-  padding: 24px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
 }
 
 .highlight-label {
   display: inline-block;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   color: rgba(255, 248, 239, 0.72);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -681,7 +710,7 @@ textarea {
   margin: 0;
   padding-left: 18px;
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .stats-grid {
@@ -739,6 +768,9 @@ textarea {
   justify-content: space-between;
   gap: 20px;
   align-items: flex-start;
+  position: relative;
+  z-index: 30;
+  overflow: visible;
 }
 
 .dashboard-title {
@@ -788,6 +820,7 @@ textarea {
 
 .profile-menu-wrap {
   position: relative;
+  z-index: 40;
 }
 
 .profile-trigger {
@@ -816,10 +849,12 @@ textarea {
   border-radius: 22px;
   background: var(--surface-strong);
   border: 1px solid var(--line);
-  box-shadow: var(--shadow);
+  box-shadow:
+    0 24px 42px rgba(22, 56, 71, 0.18),
+    0 8px 18px rgba(22, 56, 71, 0.1);
   display: grid;
   gap: 6px;
-  z-index: 20;
+  z-index: 60;
 }
 
 .profile-menu-user {
@@ -838,10 +873,24 @@ textarea {
   padding: 12px 14px;
   border-radius: 12px;
   cursor: pointer;
+  font-weight: 600;
 }
 
 .profile-menu-item:hover {
   background: rgba(22, 56, 71, 0.08);
+}
+
+[data-theme="dark"] .profile-menu {
+  background: #1a232c;
+  border-color: rgba(238, 243, 246, 0.12);
+  box-shadow:
+    0 24px 42px rgba(0, 0, 0, 0.36),
+    0 8px 18px rgba(0, 0, 0, 0.22);
+}
+
+[data-theme="dark"] .profile-menu-user,
+[data-theme="dark"] .profile-menu-item {
+  color: var(--ink);
 }
 
 .modal-backdrop {
@@ -1352,11 +1401,11 @@ textarea {
   border-radius: 16px;
   border: 1px solid rgba(22, 56, 71, 0.1);
   background: rgba(255, 255, 255, 0.52);
-  padding: 14px;
+  padding: 12px 14px;
 }
 
 .notification-item p {
-  margin: 8px 0;
+  margin: 6px 0 0;
   color: var(--muted);
 }
 
@@ -1416,13 +1465,174 @@ textarea {
   }
 }
 
+@media (max-width: 900px) {
+  .page-shell {
+    width: min(100%, calc(100% - 24px));
+    padding: 16px 0 32px;
+  }
+
+  .dashboard-layout {
+    gap: 18px;
+  }
+
+  .dashboard-main-stack,
+  .dashboard-side-stack {
+    gap: 16px;
+  }
+
+  .dashboard-topbar,
+  .panel,
+  .hero-copy,
+  .hero-panel,
+  .auth-form-card {
+    border-radius: 28px;
+  }
+
+  .section-heading {
+    margin-bottom: 16px;
+  }
+
+  .highlight-card {
+    padding: 18px;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 760px) {
   .auth-shell {
     width: min(100%, calc(100% - 20px));
+    min-height: auto;
+    padding: 16px 0 28px;
   }
 
   .auth-form-card {
     max-width: none;
+  }
+
+  .page-shell {
+    width: min(100%, calc(100% - 16px));
+    padding: 12px 0 28px;
+  }
+
+  .dashboard-topbar,
+  .panel,
+  .hero-copy,
+  .hero-panel,
+  .auth-form-card,
+  .profile-modal {
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .dashboard-title,
+  .hero-copy h1 {
+    font-size: clamp(2rem, 8vw, 3rem);
+    line-height: 1;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .profile-menu {
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 190px;
+    max-width: min(240px, calc(100vw - 40px));
+    padding: 8px;
+    border-radius: 18px;
+  }
+
+  .profile-menu-user {
+    padding: 10px 12px;
+  }
+
+  .profile-menu-item {
+    padding: 12px;
+    font-size: 0.98rem;
+  }
+
+  .section-heading {
+    gap: 12px;
+    align-items: center;
+  }
+
+  .section-heading-copy {
+    flex: 1;
+    justify-items: start;
+  }
+
+  .section-heading-title-row {
+    width: 100%;
+  }
+
+  .section-heading-action {
+    margin-left: auto;
+    align-self: center;
+  }
+
+  .section-heading .info-tooltip-trigger {
+    min-width: 40px;
+    height: 40px;
+  }
+
+  .section-heading h2,
+  .panel-heading h2,
+  .detail-header h2 {
+    font-size: 1.85rem;
+    line-height: 1.05;
+  }
+
+  .issue-card {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .issue-card-header,
+  .issue-footer,
+  .detail-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .priority-badge,
+  .status-badge,
+  .urgent-flag {
+    align-self: flex-start;
+  }
+
+  .detail-grid,
+  .form-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-chip,
+  .timeline-card,
+  .notification-item {
+    padding: 14px;
+  }
+
+  .profile-modal-header,
+  .profile-form-actions,
+  .profile-avatar-section {
+    flex-direction: column;
+  }
+
+  .profile-avatar-section {
+    align-items: flex-start;
+  }
+
+  .profile-crop-frame {
+    width: 132px;
+    height: 132px;
+    border-radius: 28px;
   }
 
   .profile-modal-header,
@@ -1434,5 +1644,116 @@ textarea {
   .profile-form-actions .secondary-button,
   .profile-form-actions .submit-button {
     width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .page-shell,
+  .auth-shell {
+    width: min(100%, calc(100% - 12px));
+  }
+
+  .dashboard-topbar,
+  .panel,
+  .hero-copy,
+  .hero-panel,
+  .auth-form-card,
+  .profile-modal {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .dashboard-topbar {
+    gap: 14px;
+  }
+
+  .topbar-actions {
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .theme-toggle {
+    flex-shrink: 0;
+  }
+
+  .profile-menu-wrap {
+    flex-shrink: 0;
+  }
+
+  .profile-menu {
+    right: -4px;
+    min-width: 176px;
+    max-width: min(220px, calc(100vw - 24px));
+  }
+
+  .hero-kicker,
+  .eyebrow,
+  .highlight-label {
+    letter-spacing: 0.12em;
+    font-size: 0.72rem;
+  }
+
+  .section-heading h2,
+  .panel-heading h2,
+  .detail-header h2 {
+    font-size: 1.6rem;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+  }
+
+  .section-heading-action {
+    align-self: center;
+  }
+
+  .stats-grid {
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .stat-card strong {
+    font-size: 1.55rem;
+  }
+
+  .issue-card {
+    padding: 14px;
+  }
+
+  .issue-card h3 {
+    font-size: 1rem;
+  }
+
+  .issue-meta {
+    gap: 8px;
+    margin: 12px 0 14px;
+    font-size: 0.86rem;
+  }
+
+  .workflow-list,
+  .timeline-list {
+    gap: 7px;
+  }
+
+  .modal-backdrop {
+    padding: 12px;
+  }
+
+  .profile-modal-header h2 {
+    font-size: 1.45rem;
+  }
+
+  .theme-toggle {
+    transform-origin: center;
+    scale: 0.9;
+  }
+
+  .info-tooltip-content {
+    width: min(260px, calc(100vw - 40px));
+    right: -6px;
   }
 }

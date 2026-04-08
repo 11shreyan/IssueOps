@@ -798,11 +798,11 @@ function render() {
 
       <section class="panel dashboard-overview">
         <div class="section-heading">
-          <div>
+          <div class="section-heading-copy">
             <p class="eyebrow">Overview</p>
             <h2>Workspace snapshot</h2>
           </div>
-          <div class="info-tooltip">
+          <div class="info-tooltip section-heading-action">
             <button
               class="info-tooltip-trigger"
               type="button"
@@ -823,13 +823,15 @@ function render() {
         <div class="dashboard-main-stack">
           <section class="panel panel-form">
             <div class="section-heading">
-              <div>
+              <div class="section-heading-copy">
                 <p class="eyebrow">Create Complaint</p>
-                <h2>Report an issue</h2>
-              </div>
-              <div class="info-tooltip">
-                <button class="info-tooltip-trigger" type="button" aria-label="Create complaint information">i</button>
-                <p class="info-tooltip-content" role="tooltip">${canSubmitIssues ? "Students can lodge new concerns here, and the system records the reporter, department routing, and escalation deadline." : "Only students and admins can lodge new concerns. Staff and HOD users focus on review, action, and resolution."}</p>
+                <div class="section-heading-title-row">
+                  <h2>Report an issue</h2>
+                  <div class="info-tooltip section-heading-action">
+                    <button class="info-tooltip-trigger" type="button" aria-label="Create complaint information">i</button>
+                    <p class="info-tooltip-content" role="tooltip">${canSubmitIssues ? "Students can lodge new concerns here, and the system records the reporter, department routing, and escalation deadline." : "Only students and admins can lodge new concerns. Staff and HOD users focus on review, action, and resolution."}</p>
+                  </div>
+                </div>
               </div>
             </div>
             ${
@@ -862,13 +864,15 @@ function render() {
 
           <section class="panel panel-board">
             <div class="section-heading">
-              <div>
+              <div class="section-heading-copy">
                 <p class="eyebrow">${getDashboardEyebrow(state.auth.role)}</p>
-                <h2>Issue board</h2>
-              </div>
-              <div class="info-tooltip">
-                <button class="info-tooltip-trigger" type="button" aria-label="Dashboard information">i</button>
-                <p class="info-tooltip-content" role="tooltip">${getDashboardTooltip(state.auth.role)}</p>
+                <div class="section-heading-title-row">
+                  <h2>Issue board</h2>
+                  <div class="info-tooltip section-heading-action">
+                    <button class="info-tooltip-trigger" type="button" aria-label="Dashboard information">i</button>
+                    <p class="info-tooltip-content" role="tooltip">${getDashboardTooltip(state.auth.role)}</p>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="issue-board">${issueCards}</div>
@@ -878,13 +882,15 @@ function render() {
         <aside class="dashboard-side-stack">
           <section class="panel panel-detail">
             <div class="section-heading">
-              <div>
+              <div class="section-heading-copy">
                 <p class="eyebrow">Issue Detail</p>
-                <h2>Selected issue</h2>
-              </div>
-              <div class="info-tooltip">
-                <button class="info-tooltip-trigger" type="button" aria-label="Issue detail information">i</button>
-                <p class="info-tooltip-content" role="tooltip">Review the summary, escalation state, and current lifecycle stage in one place.</p>
+                <div class="section-heading-title-row">
+                  <h2>Selected issue</h2>
+                  <div class="info-tooltip section-heading-action">
+                    <button class="info-tooltip-trigger" type="button" aria-label="Issue detail information">i</button>
+                    <p class="info-tooltip-content" role="tooltip">Review the summary, escalation state, and current lifecycle stage in one place.</p>
+                  </div>
+                </div>
               </div>
             </div>
             ${detailPanel}
@@ -892,13 +898,15 @@ function render() {
 
           <section class="panel">
             <div class="section-heading">
-              <div>
+              <div class="section-heading-copy">
                 <p class="eyebrow">Role Guide</p>
-                <h2>${escapeHtml(getRoleLabel(state.auth.role))} actions</h2>
-              </div>
-              <div class="info-tooltip">
-                <button class="info-tooltip-trigger" type="button" aria-label="Role guide information">i</button>
-                <p class="info-tooltip-content" role="tooltip">${getRoleGuideTooltip(state.auth.role)}</p>
+                <div class="section-heading-title-row">
+                  <h2>${escapeHtml(getRoleLabel(state.auth.role))} actions</h2>
+                  <div class="info-tooltip section-heading-action">
+                    <button class="info-tooltip-trigger" type="button" aria-label="Role guide information">i</button>
+                    <p class="info-tooltip-content" role="tooltip">${getRoleGuideTooltip(state.auth.role)}</p>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="highlight-card">

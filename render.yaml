@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: issueops-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ISSUEOPS_DATABASE_URL
+        fromDatabase:
+          name: issueops-db
+          property: connectionString
+      - key: ISSUEOPS_ALLOWED_ORIGINS
+        sync: false
+
+databases:
+  - name: issueops-db
+    plan: free
