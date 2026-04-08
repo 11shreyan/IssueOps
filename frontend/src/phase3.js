@@ -1,30 +1,41 @@
 import "./style.css";
 
 const app = document.querySelector("#app");
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 const SESSION_KEY = "issueops-session";
 const THEME_KEY = "issueops-theme";
 
 const categoryDepartmentMap = {
-  Electrical: "Electrical Department",
-  Plumbing: "Plumbing Department",
-  IT: "IT Support",
-  Sanitation: "Sanitation Department",
-  General: "Campus Operations",
+  Electrical: "EEE",
+  Plumbing: "Civil",
+  IT: "CSE",
+  Sanitation: "Civil",
+  General: "Others",
 };
 
-const suggestedStatuses = ["Reported", "Acknowledged", "In Progress", "Resolved"];
+const suggestedStatuses = [
+  "Reported",
+  "Acknowledged",
+  "In Progress",
+  "Escalated to HOD",
+  "Resolved",
+  "Rejected",
+];
 const departmentOptions = [
-  "Electrical Department",
-  "Plumbing Department",
-  "IT Support",
-  "Sanitation Department",
-  "Campus Operations",
+  "CSE",
+  "ECE",
+  "EEE",
+  "Civil",
+  "Mech",
+  "BCA",
+  "Arts",
+  "Others",
 ];
 
 const state = {
   issues: [],
   stats: { total: 0, open: 0, urgent: 0, resolved: 0 },
+  notifications: [],
   loading: false,
   submitting: false,
   statusUpdating: false,
@@ -32,12 +43,17 @@ const state = {
   error: "",
   selectedIssueId: null,
   authMode: "login",
+  authRoleDraft: "student",
+  authDepartmentDraft: departmentOptions[0],
+  authCustomDepartmentDraft: "",
   auth: loadSession(),
   theme: loadTheme(),
   profileMenuOpen: false,
   profileModalOpen: false,
   profileSaving: false,
   profileMessage: "",
+  profileDepartmentDraft: departmentOptions[0],
+  profileCustomDepartmentDraft: "",
   profileImageDraft: null,
   profileCrop: { offsetX: 50, offsetY: 50 },
   profileImageName: "",
@@ -73,6 +89,7 @@ function clearSession() {
   state.auth = null;
   state.issues = [];
   state.stats = { total: 0, open: 0, urgent: 0, resolved: 0 };
+  state.notifications = [];
   localStorage.removeItem(SESSION_KEY);
 }
 
@@ -93,6 +110,12 @@ function openProfileModal() {
   state.profileImageDraft = state.auth?.profile_image || null;
   state.profileCrop = { offsetX: 50, offsetY: 50 };
   state.profileImageName = state.auth?.profile_image ? "Current photo" : "";
+  state.profileDepartmentDraft = departmentOptions.includes(state.auth?.department)
+    ? state.auth.department
+    : "Others";
+  state.profileCustomDepartmentDraft = departmentOptions.includes(state.auth?.department) || !state.auth?.department
+    ? ""
+    : state.auth.department;
   render();
 }
 
@@ -102,7 +125,17 @@ function closeProfileModal() {
   state.profileImageDraft = null;
   state.profileCrop = { offsetX: 50, offsetY: 50 };
   state.profileImageName = "";
+  state.profileDepartmentDraft = departmentOptions[0];
+  state.profileCustomDepartmentDraft = "";
   render();
+}
+
+function resolveDepartmentValue(selectedDepartment, customDepartment) {
+  if (selectedDepartment === "Others") {
+    return customDepartment.trim() || "Others";
+  }
+
+  return selectedDepartment || null;
 }
 
 function escapeHtml(value) {
@@ -137,8 +170,85 @@ function getStatusClass(status) {
 
 function getRoleLabel(role) {
   if (role === "staff") return "Department Staff";
+  if (role === "hod") return "HOD";
   if (role === "admin") return "Admin";
   return "Student";
+}
+
+function getDashboardEyebrow(role) {
+  if (role === "student") return "Student Dashboard";
+  if (role === "staff") return "Department Queue";
+  if (role === "hod") return "HOD Portal";
+  return "Admin Overview";
+}
+
+function getDashboardTooltip(role) {
+  if (role === "student") {
+    return "This list shows the concerns you lodged, their validation result, and whether they were escalated or resolved.";
+  }
+  if (role === "staff") {
+    return "This queue contains department concerns that staff need to validate, reject, process, or resolve before escalation.";
+  }
+  if (role === "hod") {
+    return "This portal contains escalated concerns assigned to the HOD for intervention after the staff resolution window.";
+  }
+  return "This overview shows all concerns across departments, including escalations, notifications, and final outcomes.";
+}
+
+function getRoleGuideTooltip(role) {
+  if (role === "student") {
+    return "Students can register, lodge concerns, track progress, and receive mail-style notifications when updates happen.";
+  }
+  if (role === "staff") {
+    return "Department staff can validate concerns, reject invalid submissions, update progress, resolve them, or escalate to the HOD.";
+  }
+  if (role === "hod") {
+    return "HOD users handle escalated concerns, continue work, and close them after final review.";
+  }
+  return "Admins can view the full system, supervise escalations, and audit concern flow across all roles.";
+}
+
+function getStatusOptions(role) {
+  if (role === "staff") {
+    return ["Acknowledged", "In Progress", "Resolved", "Rejected", "Escalated to HOD"];
+  }
+  if (role === "hod") {
+    return ["In Progress", "Resolved"];
+  }
+  if (role === "admin") {
+    return ["Acknowledged", "In Progress", "Resolved", "Rejected", "Escalated to HOD"];
+  }
+  return [];
+}
+
+function shouldShowActionNotes(status) {
+  return status === "Rejected" || status === "Resolved";
+}
+
+function getActionNoteLabel(status) {
+  if (status === "Rejected") return "Reason for rejection";
+  if (status === "Resolved") return "Resolution summary";
+  return "Action note";
+}
+
+function getActionNoteName(status) {
+  if (status === "Rejected") return "rejectedReason";
+  if (status === "Resolved") return "resolutionSummary";
+  return "actionNote";
+}
+
+function getTimelineStatuses(issue) {
+  const base = ["Reported", "Acknowledged", "In Progress"];
+  if (issue.escalated_to_hod || issue.status === "Escalated to HOD") {
+    base.push("Escalated to HOD");
+  }
+  if (issue.status === "Resolved") {
+    base.push("Resolved");
+  }
+  if (issue.status === "Rejected") {
+    base.push("Rejected");
+  }
+  return [...new Set(base)];
 }
 
 function getFirstName(name) {
@@ -241,7 +351,7 @@ async function createCroppedProfileImage(source) {
 }
 
 function canUpdateStatus() {
-  return state.auth && (state.auth.role === "staff" || state.auth.role === "admin");
+  return state.auth && (state.auth.role === "staff" || state.auth.role === "hod" || state.auth.role === "admin");
 }
 
 function clampCropOffset(value) {
@@ -261,6 +371,11 @@ function getAuthHeaders() {
 }
 
 function renderLoginView() {
+  const selectedAuthRole = state.authRoleDraft || "student";
+  const shouldShowDepartmentField = selectedAuthRole !== "admin";
+  const selectedAuthDepartment = state.authDepartmentDraft || departmentOptions[0];
+  const shouldShowCustomDepartmentField = shouldShowDepartmentField && selectedAuthDepartment === "Others";
+
   app.innerHTML = `
     <div class="auth-shell">
       <section class="auth-card auth-form-card">
@@ -273,9 +388,19 @@ function renderLoginView() {
             title="${state.theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}"
           >
             <span class="theme-toggle-track">
-              <span class="theme-icon theme-icon-sun">☀️</span>
-              <span class="theme-icon theme-icon-moon">🌙</span>
-              <span class="theme-toggle-thumb"></span>
+              <span class="theme-toggle-aura theme-toggle-aura-light"></span>
+              <span class="theme-toggle-aura theme-toggle-aura-dark"></span>
+              <span class="theme-icon theme-icon-sun" aria-hidden="true">
+                <span class="theme-symbol">☀</span>
+              </span>
+              <span class="theme-icon theme-icon-moon" aria-hidden="true">
+                <span class="theme-symbol">☾</span>
+              </span>
+              <span class="theme-toggle-thumb">
+                <span class="theme-thumb-crater theme-thumb-crater-one"></span>
+                <span class="theme-thumb-crater theme-thumb-crater-two"></span>
+                <span class="theme-thumb-crater theme-thumb-crater-three"></span>
+              </span>
             </span>
           </button>
         </div>
@@ -287,23 +412,25 @@ function renderLoginView() {
           <button class="tab-button ${state.authMode === "login" ? "tab-active" : ""}" data-auth-mode="login" type="button">Login</button>
           <button class="tab-button ${state.authMode === "register" ? "tab-active" : ""}" data-auth-mode="register" type="button">Register</button>
         </div>
-        <form id="auth-form" class="report-form">
+        <form id="auth-form" class="report-form" autocomplete="off">
+          <input type="text" name="fake-username" autocomplete="username" tabindex="-1" class="visually-hidden" />
+          <input type="password" name="fake-password" autocomplete="current-password" tabindex="-1" class="visually-hidden" />
           ${
             state.authMode === "register"
               ? `<label>
                   Name
-                  <input name="name" type="text" maxlength="60" placeholder="Aarav" required />
+                  <input name="name" type="text" maxlength="60" placeholder="Aarav" autocomplete="off" autocapitalize="words" required />
                 </label>`
               : ""
           }
           <label>
             Email
-            <input name="email" type="email" maxlength="120" placeholder="aarav@campus.edu" required />
+            <input name="email" type="email" maxlength="120" placeholder="aarav@campus.edu" autocomplete="off" autocapitalize="none" spellcheck="false" required />
           </label>
           <label>
             Password
             <div class="password-field">
-              <input name="password" type="password" maxlength="120" placeholder="Enter password" required />
+              <input name="password" type="password" maxlength="120" placeholder="Enter password" autocomplete="new-password" spellcheck="false" required />
               <button type="button" class="password-toggle" data-password-toggle>
                 Show
               </button>
@@ -315,22 +442,35 @@ function renderLoginView() {
                   <label>
                     Role
                     <select name="role">
-                      <option value="student">Student</option>
-                      <option value="staff">Department Staff</option>
-                      <option value="admin">Admin</option>
+                      <option value="student" ${selectedAuthRole === "student" ? "selected" : ""}>Student</option>
+                      <option value="staff" ${selectedAuthRole === "staff" ? "selected" : ""}>Department Staff</option>
+                      <option value="hod" ${selectedAuthRole === "hod" ? "selected" : ""}>HOD</option>
+                      <option value="admin" ${selectedAuthRole === "admin" ? "selected" : ""}>Admin</option>
                     </select>
                   </label>
-                  <label>
-                    Department
-                    <select name="department">
-                      <option value="">No department</option>
-                      <option value="Electrical Department">Electrical Department</option>
-                      <option value="Plumbing Department">Plumbing Department</option>
-                      <option value="IT Support">IT Support</option>
-                      <option value="Sanitation Department">Sanitation Department</option>
-                      <option value="Campus Operations">Campus Operations</option>
-                    </select>
-                  </label>
+                  ${
+                    shouldShowDepartmentField
+                      ? `<label>
+                          Department
+                          <select name="department" required>
+                            ${departmentOptions
+                              .map(
+                                (department) =>
+                                  `<option value="${escapeHtml(department)}" ${selectedAuthDepartment === department ? "selected" : ""}>${escapeHtml(department)}</option>`,
+                              )
+                              .join("")}
+                          </select>
+                        </label>
+                          ${
+                            shouldShowCustomDepartmentField
+                            ? `<label class="full-width-field">
+                                Specify department
+                                <input name="customDepartment" type="text" maxlength="80" value="${escapeHtml(state.authCustomDepartmentDraft)}" placeholder="Enter your department" required />
+                              </label>`
+                            : ""
+                        }`
+                      : ""
+                  }
                 </div>`
               : ""
           }
@@ -354,6 +494,29 @@ function renderLoginView() {
   document.querySelector("#auth-form").addEventListener("submit", handleAuthSubmit);
   document.querySelector("#theme-toggle").addEventListener("click", toggleTheme);
   attachPasswordToggle();
+
+  const roleSelect = document.querySelector('select[name="role"]');
+  if (roleSelect) {
+    roleSelect.addEventListener("change", () => {
+      state.authRoleDraft = roleSelect.value;
+      render();
+    });
+  }
+
+  const departmentSelect = document.querySelector('select[name="department"]');
+  if (departmentSelect) {
+    departmentSelect.addEventListener("change", () => {
+      state.authDepartmentDraft = departmentSelect.value;
+      render();
+    });
+  }
+
+  const customDepartmentInput = document.querySelector('input[name="customDepartment"]');
+  if (customDepartmentInput) {
+    customDepartmentInput.addEventListener("input", () => {
+      state.authCustomDepartmentDraft = customDepartmentInput.value;
+    });
+  }
 }
 
 function render() {
@@ -363,6 +526,9 @@ function render() {
   }
 
   const profileName = splitName(state.auth.name);
+  const canSubmitIssues = state.auth.role === "student" || state.auth.role === "admin";
+  const canActionIssues = state.auth.role === "staff" || state.auth.role === "hod" || state.auth.role === "admin";
+  const actionOptions = getStatusOptions(state.auth.role);
 
   const selectedIssue = getSelectedIssue(state.issues);
   if (selectedIssue) state.selectedIssueId = selectedIssue.id;
@@ -389,7 +555,7 @@ function render() {
             </div>
             <div class="issue-footer">
               <span class="status-badge ${getStatusClass(issue.status)}">${escapeHtml(issue.status)}</span>
-              ${issue.immediate_action ? `<span class="urgent-flag">Requires Immediate Action</span>` : ""}
+              ${issue.escalated_to_hod ? `<span class="urgent-flag">Escalated to HOD</span>` : issue.immediate_action ? `<span class="urgent-flag">Requires Immediate Action</span>` : ""}
             </div>
           </button>
         `).join("")
@@ -408,35 +574,79 @@ function render() {
         <p class="issue-description">${escapeHtml(selectedIssue.description)}</p>
         <div class="detail-grid">
           <div class="detail-chip"><span>Status</span><strong>${escapeHtml(selectedIssue.status)}</strong></div>
+          <div class="detail-chip"><span>Validation</span><strong>${escapeHtml(selectedIssue.validation_state)}</strong></div>
           <div class="detail-chip"><span>Category</span><strong>${escapeHtml(selectedIssue.category)}</strong></div>
           <div class="detail-chip"><span>Location</span><strong>${escapeHtml(selectedIssue.location)}</strong></div>
           <div class="detail-chip"><span>Reports</span><strong>${selectedIssue.report_count}</strong></div>
           <div class="detail-chip"><span>Reporter</span><strong>${escapeHtml(selectedIssue.reported_by_name)}</strong></div>
           <div class="detail-chip"><span>Reporter role</span><strong>${escapeHtml(selectedIssue.reported_by_role)}</strong></div>
+          <div class="detail-chip"><span>Assigned to</span><strong>${escapeHtml(getRoleLabel(selectedIssue.assigned_to_role))}</strong></div>
+          <div class="detail-chip"><span>Escalation due</span><strong>${escapeHtml(selectedIssue.escalation_due_at || "Not scheduled")}</strong></div>
         </div>
         ${selectedIssue.immediate_action ? `<div class="detail-alert">This issue has crossed the escalation threshold and requires immediate action.</div>` : ""}
+        ${selectedIssue.rejected_reason ? `<div class="detail-alert">Rejected reason: ${escapeHtml(selectedIssue.rejected_reason)}</div>` : ""}
+        ${selectedIssue.resolution_summary ? `<div class="timeline-card"><h3>Resolution note</h3><p class="issue-description">${escapeHtml(selectedIssue.resolution_summary)}</p></div>` : ""}
         <div class="timeline-card">
           <h3>Status journey</h3>
           <ol class="timeline-list">
-            ${suggestedStatuses.map((status) => `<li class="${status === selectedIssue.status ? "timeline-current" : ""}">${escapeHtml(status)}</li>`).join("")}
+            ${getTimelineStatuses(selectedIssue).map((status) => `<li class="${status === selectedIssue.status ? "timeline-current" : ""}">${escapeHtml(status)}</li>`).join("")}
           </ol>
         </div>
-        ${canUpdateStatus()
+        ${canActionIssues
           ? `<form id="status-form" class="status-form">
               <label>
-                Update issue status
+                Concern action
                 <select name="status">
-                  ${suggestedStatuses.map((status) => `<option value="${escapeHtml(status)}" ${status === selectedIssue.status ? "selected" : ""}>${escapeHtml(status)}</option>`).join("")}
+                  ${actionOptions.map((status) => `<option value="${escapeHtml(status)}">${escapeHtml(status)}</option>`).join("")}
                 </select>
               </label>
+              <label>
+                Validation state
+                <select name="validationState">
+                  <option value="Validated">Validated</option>
+                  <option value="Pending Review">Pending Review</option>
+                  <option value="Rejected">Rejected</option>
+                  <option value="Escalated">Escalated</option>
+                </select>
+              </label>
+              <label id="status-note-field" class="${shouldShowActionNotes(actionOptions[0] || "") ? "" : "visually-hidden"}">
+                <span class="status-note-label">${escapeHtml(getActionNoteLabel(actionOptions[0] || ""))}</span>
+                <textarea name="${escapeHtml(getActionNoteName(actionOptions[0] || ""))}" rows="3" placeholder="Add a short note for the student"></textarea>
+              </label>
               <button type="submit" class="submit-button" ${state.statusUpdating ? "disabled" : ""}>
-                ${state.statusUpdating ? "Saving..." : "Save status"}
+                ${state.statusUpdating ? "Saving..." : "Save action"}
               </button>
             </form>`
-          : `<div class="timeline-card"><h3>Student visibility</h3><p class="issue-description">Students can view status, urgency, department ownership, and who reported the issue.</p></div>`}
+          : `<div class="timeline-card"><h3>Student visibility</h3><p class="issue-description">Students can track validation, escalation to HOD, final resolution, and outgoing mail-style notifications here.</p></div>`}
       </div>
     `
     : `<div class="empty-state">Select an issue to see its details.</div>`;
+
+  const notificationPanel = state.notifications.length
+    ? `
+      <div class="timeline-card">
+        <h3>Mail notifications</h3>
+        <div class="notification-list">
+          ${state.notifications
+            .map(
+              (item) => `
+                <div class="notification-item">
+                  <strong>Concern #${item.issue_id}</strong>
+                  <p>${escapeHtml(item.message)}</p>
+                  <span>${escapeHtml(item.sent_at)}</span>
+                </div>
+              `,
+            )
+            .join("")}
+        </div>
+      </div>
+    `
+    : `
+      <div class="timeline-card">
+        <h3>Mail notifications</h3>
+        <p class="issue-description">No mail notifications are queued right now.</p>
+      </div>
+    `;
 
   const profileModal = state.profileModalOpen
     ? `
@@ -496,18 +706,29 @@ function render() {
                 <input type="text" value="${escapeHtml(getRoleLabel(state.auth.role))}" disabled />
               </label>
             </div>
-            <label>
-              Department
-              <select name="department">
-                <option value="">No department</option>
-                ${departmentOptions
-                  .map(
-                    (department) =>
-                      `<option value="${escapeHtml(department)}" ${state.auth.department === department ? "selected" : ""}>${escapeHtml(department)}</option>`,
-                  )
-                  .join("")}
-              </select>
-            </label>
+            ${
+              state.auth.role === "admin"
+                ? ""
+                : `<label>
+                    Department
+                    <select name="department" required>
+                      ${departmentOptions
+                        .map(
+                          (department) =>
+                            `<option value="${escapeHtml(department)}" ${state.profileDepartmentDraft === department ? "selected" : ""}>${escapeHtml(department)}</option>`,
+                        )
+                        .join("")}
+                    </select>
+                  </label>
+                  ${
+                    state.profileDepartmentDraft === "Others"
+                      ? `<label class="full-width-field">
+                          Specify department
+                          <input name="customDepartment" type="text" maxlength="80" value="${escapeHtml(state.profileCustomDepartmentDraft)}" placeholder="Enter your department" required />
+                        </label>`
+                      : ""
+                  }`
+            }
             <div class="profile-form-actions">
               <button id="cancel-profile-button" class="secondary-button" type="button">Cancel</button>
               <button type="submit" class="submit-button" ${state.profileSaving ? "disabled" : ""}>
@@ -538,9 +759,19 @@ function render() {
             title="${state.theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}"
           >
             <span class="theme-toggle-track">
-              <span class="theme-icon theme-icon-sun">☀️</span>
-              <span class="theme-icon theme-icon-moon">🌙</span>
-              <span class="theme-toggle-thumb"></span>
+              <span class="theme-toggle-aura theme-toggle-aura-light"></span>
+              <span class="theme-toggle-aura theme-toggle-aura-dark"></span>
+              <span class="theme-icon theme-icon-sun" aria-hidden="true">
+                <span class="theme-symbol">☀</span>
+              </span>
+              <span class="theme-icon theme-icon-moon" aria-hidden="true">
+                <span class="theme-symbol">☾</span>
+              </span>
+              <span class="theme-toggle-thumb">
+                <span class="theme-thumb-crater theme-thumb-crater-one"></span>
+                <span class="theme-thumb-crater theme-thumb-crater-two"></span>
+                <span class="theme-thumb-crater theme-thumb-crater-three"></span>
+              </span>
             </span>
           </button>
           <div class="profile-menu-wrap">
@@ -571,7 +802,14 @@ function render() {
             <p class="eyebrow">Overview</p>
             <h2>Workspace snapshot</h2>
           </div>
-          <p class="section-copy">Your current workload is grouped here so the important numbers are visible before you dive into the details.</p>
+          <div class="info-tooltip">
+            <button
+              class="info-tooltip-trigger"
+              type="button"
+              aria-label="Overview information"
+            >i</button>
+            <p class="info-tooltip-content" role="tooltip">Your current workload is grouped here so the important numbers are visible before you dive into the details.</p>
+          </div>
         </div>
         <div class="stats-grid dashboard-stats">
           <div class="stat-card"><strong>${state.stats.total}</strong><span>Visible issues</span></div>
@@ -589,39 +827,49 @@ function render() {
                 <p class="eyebrow">Create Complaint</p>
                 <h2>Report an issue</h2>
               </div>
-              <p class="section-copy">Authenticated users can submit complaints and the backend records who reported them.</p>
-            </div>
-            <form id="report-form" class="report-form">
-              <label>Issue title<input name="title" type="text" maxlength="120" placeholder="Light not working in corridor" required /></label>
-              <label>Description<textarea name="description" rows="5" placeholder="Describe what is happening, where it is, and how serious it feels." required></textarea></label>
-              <div class="form-row">
-                <label>
-                  Category
-                  <select name="category">
-                    <option value="">Auto-detect from description</option>
-                    <option value="Electrical">Electrical</option>
-                    <option value="Plumbing">Plumbing</option>
-                    <option value="IT">IT</option>
-                    <option value="Sanitation">Sanitation</option>
-                    <option value="General">General</option>
-                  </select>
-                </label>
-                <label>Location<input name="location" type="text" maxlength="120" placeholder="Block A - 2nd Floor" /></label>
+              <div class="info-tooltip">
+                <button class="info-tooltip-trigger" type="button" aria-label="Create complaint information">i</button>
+                <p class="info-tooltip-content" role="tooltip">${canSubmitIssues ? "Students can lodge new concerns here, and the system records the reporter, department routing, and escalation deadline." : "Only students and admins can lodge new concerns. Staff and HOD users focus on review, action, and resolution."}</p>
               </div>
-              <div id="form-preview" class="form-preview"></div>
-              <button type="submit" class="submit-button" ${state.submitting ? "disabled" : ""}>${state.submitting ? "Submitting..." : "Submit issue"}</button>
-              <p class="form-note">Suggested status flow: ${suggestedStatuses.join(" -> ")}</p>
-              ${state.error ? `<p class="form-error">${escapeHtml(state.error)}</p>` : ""}
-            </form>
+            </div>
+            ${
+              canSubmitIssues
+                ? `<form id="report-form" class="report-form">
+                    <label>Issue title<input name="title" type="text" maxlength="120" placeholder="Light not working in corridor" required /></label>
+                    <label>Description<textarea name="description" rows="5" placeholder="Describe what is happening, where it is, and how serious it feels." required></textarea></label>
+                    <div class="form-row">
+                      <label>
+                        Category
+                        <select name="category">
+                          <option value="">Auto-detect from description</option>
+                          <option value="Electrical">Electrical</option>
+                          <option value="Plumbing">Plumbing</option>
+                          <option value="IT">IT</option>
+                          <option value="Sanitation">Sanitation</option>
+                          <option value="General">General</option>
+                        </select>
+                      </label>
+                      <label>Location<input name="location" type="text" maxlength="120" placeholder="Block A - 2nd Floor" /></label>
+                    </div>
+                    <div id="form-preview" class="form-preview"></div>
+                    <button type="submit" class="submit-button" ${state.submitting ? "disabled" : ""}>${state.submitting ? "Submitting..." : "Lodge concern"}</button>
+                    <p class="form-note">Workflow: Reported -> staff validation -> department handling -> HOD escalation if unresolved within 4 days -> final notification.</p>
+                    ${state.error ? `<p class="form-error">${escapeHtml(state.error)}</p>` : ""}
+                  </form>`
+                : `<div class="empty-state">This portal is action-only. Students lodge concerns, while ${escapeHtml(getRoleLabel(state.auth.role))} users handle review and resolution.</div>`
+            }
           </section>
 
           <section class="panel panel-board">
             <div class="section-heading">
               <div>
-                <p class="eyebrow">${state.auth.role === "student" ? "Student Dashboard" : state.auth.role === "staff" ? "Department Queue" : "Admin Overview"}</p>
+                <p class="eyebrow">${getDashboardEyebrow(state.auth.role)}</p>
                 <h2>Issue board</h2>
               </div>
-              <p class="section-copy">${state.auth.role === "student" ? "This list comes from /dashboard/student and only includes your submitted issues." : state.auth.role === "staff" ? "This list comes from /dashboard/staff and is filtered by your assigned department." : "This list comes from /dashboard/admin and shows the full campus issue load."}</p>
+              <div class="info-tooltip">
+                <button class="info-tooltip-trigger" type="button" aria-label="Dashboard information">i</button>
+                <p class="info-tooltip-content" role="tooltip">${getDashboardTooltip(state.auth.role)}</p>
+              </div>
             </div>
             <div class="issue-board">${issueCards}</div>
           </section>
@@ -634,7 +882,10 @@ function render() {
                 <p class="eyebrow">Issue Detail</p>
                 <h2>Selected issue</h2>
               </div>
-              <p class="section-copy">Review the summary, escalation state, and current lifecycle stage in one place.</p>
+              <div class="info-tooltip">
+                <button class="info-tooltip-trigger" type="button" aria-label="Issue detail information">i</button>
+                <p class="info-tooltip-content" role="tooltip">Review the summary, escalation state, and current lifecycle stage in one place.</p>
+              </div>
             </div>
             ${detailPanel}
           </section>
@@ -645,17 +896,21 @@ function render() {
                 <p class="eyebrow">Role Guide</p>
                 <h2>${escapeHtml(getRoleLabel(state.auth.role))} actions</h2>
               </div>
-              <p class="section-copy">${state.auth.role === "student" ? "Students can register, log in, report issues, and view their own issue history from the backend." : state.auth.role === "staff" ? "Department staff can authenticate, see only their queue, and update issue statuses." : "Admins can authenticate, view system-wide issue load, and oversee escalations across departments."}</p>
+              <div class="info-tooltip">
+                <button class="info-tooltip-trigger" type="button" aria-label="Role guide information">i</button>
+                <p class="info-tooltip-content" role="tooltip">${getRoleGuideTooltip(state.auth.role)}</p>
+              </div>
             </div>
             <div class="highlight-card">
               <span class="highlight-label">Current role</span>
               <ul class="workflow-list">
                 <li>${escapeHtml(getRoleLabel(state.auth.role))}</li>
                 <li>${state.auth.department ? `Department scope: ${escapeHtml(state.auth.department)}` : "Cross-campus visibility"}</li>
-                <li>Backend token auth enabled</li>
-                <li>Status updates ${canUpdateStatus() ? "enabled" : "visible in read-only mode"}</li>
+                <li>${state.auth.role === "student" ? "Can lodge and track concerns" : state.auth.role === "staff" ? "Can validate, reject, resolve, or escalate" : state.auth.role === "hod" ? "Can resolve escalated concerns" : "Can supervise every stage"}</li>
+                <li>Mail-style notifications ${state.notifications.length ? "queued" : "available when updates happen"}</li>
               </ul>
             </div>
+            ${notificationPanel}
           </section>
         </aside>
       </section>
@@ -713,11 +968,50 @@ function attachDashboardListeners() {
   });
 
   const statusForm = document.querySelector("#status-form");
-  if (statusForm && state.selectedIssueId) statusForm.addEventListener("submit", handleStatusUpdate);
+  if (statusForm && state.selectedIssueId) {
+    statusForm.addEventListener("submit", handleStatusUpdate);
+    const statusSelect = statusForm.querySelector('select[name="status"]');
+    if (statusSelect) {
+      const syncStatusActionField = () => {
+        const noteField = document.querySelector("#status-note-field");
+        const noteTextarea = noteField?.querySelector("textarea");
+        const noteLabel = noteField?.querySelector(".status-note-label");
+        if (!noteField || !noteTextarea) {
+          return;
+        }
+        const currentStatus = statusSelect.value;
+        const showNotes = shouldShowActionNotes(currentStatus);
+        noteField.classList.toggle("visually-hidden", !showNotes);
+        if (noteLabel) {
+          noteLabel.textContent = getActionNoteLabel(currentStatus);
+        }
+        noteTextarea.name = getActionNoteName(currentStatus);
+        noteTextarea.required = showNotes;
+        noteTextarea.placeholder = currentStatus === "Rejected" ? "Explain why the concern is invalid" : "Describe how the concern was resolved";
+      };
+      statusSelect.addEventListener("change", syncStatusActionField);
+      syncStatusActionField();
+    }
+  }
 
   const profileForm = document.querySelector("#profile-form");
   if (profileForm) {
     profileForm.addEventListener("submit", handleProfileSave);
+  }
+
+  const profileDepartmentSelect = document.querySelector('#profile-form select[name="department"]');
+  if (profileDepartmentSelect) {
+    profileDepartmentSelect.addEventListener("change", () => {
+      state.profileDepartmentDraft = profileDepartmentSelect.value;
+      render();
+    });
+  }
+
+  const profileCustomDepartmentInput = document.querySelector('#profile-form input[name="customDepartment"]');
+  if (profileCustomDepartmentInput) {
+    profileCustomDepartmentInput.addEventListener("input", () => {
+      state.profileCustomDepartmentDraft = profileCustomDepartmentInput.value;
+    });
   }
 
   const profileImageInput = document.querySelector("#profile-image-input");
@@ -815,6 +1109,7 @@ async function fetchDashboard() {
     const payload = await response.json();
     state.issues = payload.issues;
     state.stats = payload.stats;
+    state.notifications = payload.notifications || [];
   } catch (error) {
     state.error = error.message;
   } finally {
@@ -832,13 +1127,14 @@ async function handleAuthSubmit(event) {
   render();
 
   try {
+    const role = isRegister ? form.role.value : null;
     const payload = isRegister
       ? {
           name: form.name.value.trim(),
           email: form.email.value.trim(),
           password: form.password.value,
-          role: form.role.value,
-          department: form.department.value || null,
+          role,
+          department: role === "admin" ? null : resolveDepartmentValue(form.department.value, form.customDepartment?.value || ""),
         }
       : {
           email: form.email.value.trim(),
@@ -926,7 +1222,12 @@ async function handleStatusUpdate(event) {
     const response = await fetch(`${API_BASE_URL}/issues/${state.selectedIssueId}`, {
       method: "PUT",
       headers: getAuthHeaders(),
-      body: JSON.stringify({ status: form.status.value }),
+      body: JSON.stringify({
+        status: form.status.value,
+        validation_state: form.validationState.value,
+        resolution_summary: form.resolutionSummary?.value || "",
+        rejected_reason: form.rejectedReason?.value || "",
+      }),
     });
     if (!response.ok) {
       const errorPayload = await response.json().catch(() => ({}));
@@ -968,7 +1269,7 @@ async function handleProfileSave(event) {
       : null;
     const payload = {
       name: [firstName, middleName, lastName].filter(Boolean).join(" "),
-      department: form.department.value || null,
+      department: state.auth.role === "admin" ? null : resolveDepartmentValue(form.department.value, form.customDepartment?.value || ""),
       profile_image: croppedProfileImage,
     };
 

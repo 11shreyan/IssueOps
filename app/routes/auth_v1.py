@@ -27,11 +27,20 @@ def register(payload: schemas.UserRegister):
             detail="A user with this email already exists",
         )
 
+    resolved_department = payload.department
+    if payload.role == "admin":
+        resolved_department = None
+    elif not resolved_department:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Department is required for students, staff, and HOD users",
+        )
+
     user = {
         "name": payload.name.strip(),
         "email": email,
         "role": payload.role,
-        "department": payload.department,
+        "department": resolved_department,
         "profile_image": payload.profile_image,
         "password_hash": hash_password(payload.password),
     }
@@ -66,11 +75,12 @@ def me(user: dict = Depends(get_current_user)):
 def update_profile(
     payload: schemas.UserProfileUpdate, user: dict = Depends(get_current_user)
 ):
+    resolved_department = payload.department if user["role"] != "admin" else None
     updated_user = update_user(
         user["email"],
         {
             "name": payload.name.strip(),
-            "department": payload.department,
+            "department": resolved_department,
             "profile_image": payload.profile_image,
         },
     )

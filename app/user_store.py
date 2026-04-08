@@ -17,8 +17,15 @@ SEED_USERS = [
         "name": "Meera Electrical",
         "email": "staff@issueops.local",
         "role": "staff",
-        "department": "Electrical Department",
+        "department": "EEE",
         "password": "staff123",
+    },
+    {
+        "name": "Dr Kavya HOD",
+        "email": "hod@issueops.local",
+        "role": "hod",
+        "department": "EEE",
+        "password": "hod123",
     },
     {
         "name": "Admin Priya",

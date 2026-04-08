@@ -44,6 +44,9 @@ class IssueCreate(BaseModel):
 
 class IssueStatusUpdate(BaseModel):
     status: str
+    validation_state: str | None = None
+    resolution_summary: str | None = None
+    rejected_reason: str | None = None
 
 class IssueResponse(BaseModel):
     id: int
@@ -55,7 +58,17 @@ class IssueResponse(BaseModel):
     reported_by_name: str
     reported_by_email: str
     reported_by_role: str
+    assigned_to_role: str
     status: str
+    validation_state: str
+    resolution_summary: str
+    rejected_reason: str
+    last_updated_at: str
+    created_at: str
+    resolved_at: str
+    escalation_due_at: str
+    escalated_to_hod: bool
+    notification_message: str
     report_count: int
     priority: str
     immediate_action: bool
@@ -76,3 +89,14 @@ class DashboardResponse(BaseModel):
     department: str | None = None
     stats: DashboardStats
     issues: list[IssueResponse]
+
+
+class NotificationItem(BaseModel):
+    issue_id: int
+    message: str
+    channel: str = "mail"
+    sent_at: str
+
+
+class DashboardBundleResponse(DashboardResponse):
+    notifications: list[NotificationItem] = []

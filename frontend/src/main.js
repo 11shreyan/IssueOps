@@ -1,15 +1,15 @@
 import "./style.css";
 
 const app = document.querySelector("#app");
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 const SESSION_KEY = "issueops-session";
 
 const categoryDepartmentMap = {
-  Electrical: "Electrical Department",
-  Plumbing: "Plumbing Department",
-  IT: "IT Support",
-  Sanitation: "Sanitation Department",
-  General: "Campus Operations",
+  Electrical: "EEE",
+  Plumbing: "Civil",
+  IT: "CSE",
+  Sanitation: "Civil",
+  General: "Others",
 };
 
 const suggestedStatuses = ["Reported", "Acknowledged", "In Progress", "Resolved"];
@@ -175,11 +175,14 @@ function renderLoginView() {
             <label>
               Department
               <select name="department">
-                <option value="Electrical Department">Electrical Department</option>
-                <option value="Plumbing Department">Plumbing Department</option>
-                <option value="IT Support">IT Support</option>
-                <option value="Sanitation Department">Sanitation Department</option>
-                <option value="Campus Operations">Campus Operations</option>
+                <option value="CSE">CSE</option>
+                <option value="ECE">ECE</option>
+                <option value="EEE">EEE</option>
+                <option value="Civil">Civil</option>
+                <option value="Mech">Mech</option>
+                <option value="BCA">BCA</option>
+                <option value="Arts">Arts</option>
+                <option value="Others">Others</option>
               </select>
             </label>
           </div>
