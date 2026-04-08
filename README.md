@@ -53,13 +53,13 @@ IssueOps is a university concern-management platform for students, department st
 Backend:
 
 ```bash
-cd "/Users/klshreyan.reddy/Desktop/Only Coding/IssueOps/IssueOps"
+cd "/Users/Path_to_Directory/IssueOps"
 .venv/bin/python -m uvicorn app.main:app --reload
 ```
 
 Frontend:
 
 ```bash
-cd "/Users/klshreyan.reddy/Desktop/Only Coding/IssueOps/IssueOps/frontend"
+cd "/Users/Path_to_Directory/IssueOps/frontend"
 npm run dev
 ```
