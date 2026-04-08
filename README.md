@@ -63,27 +63,3 @@ Frontend:
 cd "/Users/klshreyan.reddy/Desktop/Only Coding/IssueOps/IssueOps/frontend"
 npm run dev
 ```
-
-## Demo Accounts
-
-- Student: `student@issueops.local` / `student123`
-- Staff: `staff@issueops.local` / `staff123`
-- HOD: `hod@issueops.local` / `hod123`
-- Admin: `admin@issueops.local` / `admin123`
-
-## Deployment
-
-This repo is prepared for:
-
-- `GitHub Pages` frontend deployment using [`deploy-pages.yml`](.github/workflows/deploy-pages.yml)
-- `Render` backend deployment using [`render.yaml`](render.yaml)
-- `Render Postgres` as the production database
-
-Detailed steps are in [`DEPLOYMENT.md`](DEPLOYMENT.md).
-
-## Important Notes
-
-- Local development uses `SQLite`
-- Hosted deployment should use `Postgres`
-- The frontend reads `VITE_API_BASE_URL`
-- The backend reads `ISSUEOPS_DATABASE_URL` and `ISSUEOPS_ALLOWED_ORIGINS`
